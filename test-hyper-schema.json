@@ -1,0 +1,126 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "type": "object",
+    "properties": {
+        "description": {"type": "string"},
+        "schema": {"$ref": "http://json-schema.org/draft-07/hyper-schema#"},
+        "tests": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "required": ["data", "links"],
+                "properties": {
+                    "data": true,
+                    "mediaType": {
+                        "type": "string",
+                        "pattern": "^application/([-a-z]+)?json",
+                        "default": "application/json"
+                    },
+                    "links": {
+                        "type": "object",
+                        "propertyNames": {"format": "json-pointer"},
+                        "additionalProperties": {
+                            "$ref": "#/definitions/testCase"
+                        },
+                        "minProperties": 1
+                    }
+                }
+            },
+            "minItems": 1,
+            "uniqueItems": true
+        }
+    },
+    "definitions": {
+        "testCase": {
+            "type":  "object",
+            "required": [
+                "ldo",
+                "pointer",
+                "usable"
+            ],
+            "properties": {
+                "ldo": {"$ref": "http://json-schema.org/draft-07/links#"},
+                "pointer": {
+                    "description": "The JSON Pointer for the LDO in the schema",
+                    "type": "string",
+                    "format": "json-pointer"
+                },
+                "usable": {
+                    "description": "True if the link is usable with the given instance"
+                }
+            },
+            "if": {
+                "properties": {"usable": {"const": true}}
+            },
+            "then": {
+                "$ref": "#/definitions/usableLinkResults"
+            }
+        },
+        "usableLinkResults": {
+            "required": [
+                "contextUri",
+                "targetUris",
+                "isSelfLink",
+                "isCollectionLink",
+                "isItemLink",
+                "allowsHrefInput",
+                "allowsDataSubmission"
+            ],
+            "properties": {
+                "contextUri": {
+                    "type": "string",
+                    "format": "uri"
+                },
+                "targetUris": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "required": ["uri"],
+                        "properties": {
+                            "uri": {
+                                "type": "string",
+                                "format": "uri"
+                            }
+                        }
+                    },
+                    "minItems": 1
+                },
+                "contextPointer": {
+                    "description": "Present only if the instance media type does not support JSON Pointer fragments",
+                    "type": "string",
+                    "format": "json-pointer"
+                },
+                "isSelfLink": {"type": "boolean"},
+                "isCollectionLink": {"type": "boolean"},
+                "isItemLink": {"type": "boolean"},
+                "allowsHrefInput": {"type": "boolean"},
+                "allowsDataSubmission": {"type": "boolean"}
+            },
+            "if": {
+                "description": "Non-false hrefSchema requires input",
+                "properties": {
+                    "ldo": {
+                        "required": ["hrefSchema"],
+                        "properties": {
+                            "hrefSchema": {"not": {"const": false}}
+                        }
+                    }
+                }
+            },
+            "then": {
+                "properties": {
+                    "targetUris": {
+                        "items": {
+                            "required": ["input", "inputIsValid"],
+                            "properties": {
+                                "input": {"type": "object"},
+                                "inputIsValid": {"type": "boolean"}
+                            }
+                        },
+                        "minItems": 1
+                    }
+                }
+            }
+        }
+    }
+}
